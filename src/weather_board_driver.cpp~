@@ -1,0 +1,89 @@
+#include <wiringPi.h>
+#include <wiringPiI2C.h>
+
+#include <iostream>
+#include "ros/ros.h"
+
+#include <weather_board_driver/wb_data.h>
+
+#include <stdio.h>
+#include "bme280-i2c.h"
+#include "si1132.h"
+
+static unsigned int pressure;
+static int temperature;
+static unsigned int humidity;
+static float altitude;
+
+float SEALEVELPRESSURE_HPA = 1024.25;
+
+
+#define TCAADDR 0x70
+int fd = wiringPiI2CSetup(TCAADDR);
+
+void tcaselect(int i){
+  if (i>7 || i<0) return;
+  wiringPiI2CWrite(fd,1<<i);    
+}
+
+int main(int argc, char **argv)
+{
+  char *device = "/dev/i2c-1";
+  std::cout<< 'multiplexer handler at: '<< fd <<std::endl;
+
+  tcaselect(0);
+  si1132_begin(device);
+  if (bme280_begin(device) < 0) {
+    return -1;
+  }
+
+  tcaselect(1);
+  si1132_begin(device);
+  if (bme280_begin(device) < 0) {
+    return -1;
+  }
+  
+  ros::init(argc, argv, "weather_board_driver");
+  ros::NodeHandle n;
+  ros::Publisher wb_pub = n.advertise<weather_board_driver::wb_data>("wb_data", 100);
+  ros::Rate loop_rate(50);
+
+  while (ros::ok()) {
+    tcaselect(0);
+    weather_board_driver::wb_data wb_data;
+    wb_data.UV_index = Si1132_readUV()/100.0;
+    wb_data.visible  = Si1132_readVisible();
+    wb_data.IR  = Si1132_readIR();
+
+    bme280_read_pressure_temperature_humidity(&pressure, &temperature, &humidity);
+    wb_data.temperature  = temperature/100.0;
+    wb_data.humidity     = humidity/1024.0;
+    wb_data.pressure     = pressure/100.0;
+    wb_data.altitude     = bme280_readAltitude(pressure,SEALEVELPRESSURE_HPA);
+
+    wb_pub.publish(wb_data);
+
+    printf("humidity 0: %.2lf %%\e[K\n",(double)humidity/1024.0);
+
+
+    
+    tcaselect(1);
+    wb_data.UV_index = Si1132_readUV()/100.0;
+    wb_data.visible  = Si1132_readVisible();
+    wb_data.IR  = Si1132_readIR();
+
+    bme280_read_pressure_temperature_humidity(&pressure, &temperature, &humidity);
+    wb_data.temperature  = temperature/100.0;
+    wb_data.humidity     = humidity/1024.0;
+    wb_data.pressure     = pressure/100.0;
+    wb_data.altitude     = bme280_readAltitude(pressure,SEALEVELPRESSURE_HPA);
+
+    printf("humidity 1: %.2lf %%\e[K\n",(double)humidity/1024.0);
+
+    sleep(1);
+    ros::spinOnce();
+    loop_rate.sleep();
+
+  }
+  return 0;
+}
