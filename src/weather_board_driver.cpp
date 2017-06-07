@@ -18,31 +18,28 @@ float altitude;
 
 float SEALEVELPRESSURE_HPA = 1024.25;
 
-#define TCAADDR 0x70 // same for both multiplexers (on different i2c buses)
+#define TCAADDR1 0x70 //first multiplexer
+#define TCAADDR2 0x71 //second multiplexer
 
 // file handlers for the multiplexers
 int fd1; 
 int fd2;
 
-// file handlers for the sensor of the 1st and 2nd multiplexer
-int bme280Fd1;
-int bme280Fd2;
-
-void tcaselect(int i, int fd){
+void tcaselect(int i){
   if (i>7){
-    wiringPiI2CWrite(fd,1<<(i-8));
+    wiringPiI2CWrite(fd1,0); //no channel selected from 1st multiplexer
+    wiringPiI2CWrite(fd2,1<<(i-8)); //select sensor from 2nd multiplexer
   }
   else{
-    wiringPiI2CWrite(fd,1<<i);
+    wiringPiI2CWrite(fd2,0); //no channel selected from 2nd multiplexer
+    wiringPiI2CWrite(fd1,1<<i); //select sensor from 1st multiplexer
   }
 }
 
 int main(int argc, char **argv)
 {
-  char *device1 = "/dev/i2c-1";
-  char *device2 = "/dev/i2c-2";
-  char *device; // temp container
-  
+  char *device = "/dev/i2c-1";
+
   ros::init(argc, argv, "weather_board_driver");
   ros::NodeHandle n;
   ros::Publisher wb_pub = n.advertise<weather_board_driver::wb_list>("wb_list", 1);
@@ -56,36 +53,31 @@ int main(int argc, char **argv)
   std::cout<<"sensor frequency: "<<lr<<" hz"<<std::endl;
   ros::Rate loop_rate(lr);
 
-  fd1 = wiringPiI2CSetupInterface(device1, TCAADDR);
+  fd1 = wiringPiI2CSetupInterface(device, TCAADDR1);
   std::cout<<"1st multiplexer handle: "<<fd1<<std::endl;
 
   if (num_sensors>8){
-    fd2 = wiringPiI2CSetupInterface(device2, TCAADDR);
+    fd2 = wiringPiI2CSetupInterface(device, TCAADDR2);
     std::cout<<"2nd multiplexer handle: "<<fd2<<std::endl;
   }
 
   for (int j=0; j<num_sensors;j++){
- 
+    tcaselect(j);
+    /*
     if (j>7){
-      tcaselect(j, fd2);
       std::cout<<"starting the "<<j<< "th bme280 sensor on fd1: "<<fd2<<" handle"<<std::endl;
-      device = device2;
     }
     else{
-      tcaselect(j, fd1);
       std::cout<<"starting the "<<j<< "th bme280 sensor on fd: "<<fd1<<" handle"<<std::endl;
-      device = device1;
-    }    
+    } 
+    */
     
     //si1132_begin(device);
     if (bme280_begin(device) < 0) {
       std::cerr<<"bme280 failed on sensor: "<<j<<std::endl;
       return -1;
     }
-    // save so I can update bme280Fd global var later in the while loop
-    if (j<7){bme280Fd1 = bme280Fd;} // same for a specific multiplexer (dependent on the i2c bus)
-    else{    bme280Fd2 = bme280Fd;}
-  }
+   }
   
     /*
     int com  = 5;//bme280_set_filter(BME280_FILTER_COEFF_OFF);
@@ -110,15 +102,7 @@ int main(int argc, char **argv)
       temperature = 0;
       humidity = 0;
       altitude = 0;
-
-      if (j>7){//select which sensor from multiplexer
-	tcaselect(j, fd2);
-	bme280Fd = bme280Fd2; //reset global var in bme280 api
-      }
-      else{
-	tcaselect(j, fd1);
-	bme280Fd = bme280Fd1; //reset global var in bme280 api
-      }
+      tcaselect(j);
 
       weather_board_driver::wb_data data;
       
