@@ -1,0 +1,14 @@
+<launch>
+	### Weather board sensor grid ###
+	#-------------------------------#
+	
+	<node pkg="weather_board_driver" type="weather_board_driver" name="wb_driver" output="screen"/>
+	<param name="num_sensors" type="int" value="1"/>
+	<param name="hz" type="int" value="100"/>
+
+
+	### RQT plot humidity ###
+	#-----------------------#
+	<!--node pkg="rqt_plot" type="rqt_plot" name="rqt_plot" args="/wb_list/wb_list[0]/humidity /wb_list/wb_list[1]/humidity"/-->
+
+</launch>

@@ -77,8 +77,13 @@ int main(int argc, char **argv)
       std::cerr<<"bme280 failed on sensor: "<<j<<std::endl;
       return -1;
     }
+    else{
+      int com = bme280_set_power_mode(BME280_NORMAL_MODE);
+      int com1 = bme280_set_oversamp_pressure(BME280_OVERSAMP_SKIPPED);
+      std::cout<<com1<<", "<<com1<<std::endl;
+    }
    }
-  
+
     /*
     int com  = 5;//bme280_set_filter(BME280_FILTER_COEFF_OFF);
     int com1 = 5;//bme280_set_oversamp_humidity(BME280_OVERSAMP_1X);
