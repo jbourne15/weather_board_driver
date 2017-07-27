@@ -12,10 +12,12 @@ from weather_board_driver.msg import wb_list
 plt.ion()
 fsize=(14,12)
 fig = plt.figure('humidity_plot', figsize=fsize)
-ax = fig.add_subplot(111, projection='3d')
+#ax = fig.add_subplot(111, projection='3d')
+ax = fig.add_subplot(111)#, projection='3d')
 ax.grid(True)
 plt.xlabel(r'$x$ '+ r'$(m)$', fontsize=20)
 plt.ylabel(r'$y$ '+ r'$(m)$',fontsize=20)
+#ax.set_zlim(30,100)
 
 
 X = np.linspace(0,8,5)
@@ -40,13 +42,16 @@ def surface_updater():
     global X,Y,Z,fig,fsize,surf
     fig.clf()
     fig = plt.figure('humidity_plot', figsize=fsize)
-    ax = fig.add_subplot(111, projection='3d')
+    #ax = fig.add_subplot(111, projection='3d')
+    ax = fig.add_subplot(111)#, projection='3d')
+    #ax.set_zlim(30,100)
     ax.grid(True)
     plt.xlabel(r'$x$ '+ r'$(m)$', fontsize=20)
     plt.ylabel(r'$y$ '+ r'$(m)$',fontsize=20)
 
-    surf = ax.plot_surface(X, Y, Z, cmap='coolwarm')
-    ax.plot_wireframe(X, Y, Z,color='k')
+    #surf = ax.plot_surface(X, Y, Z)#, cmap='coolwarm')
+    surf = ax.contourf(X, Y, Z,100, cmap='coolwarm')
+    #ax.plot_wireframe(X, Y, Z,color='k')
     fig.canvas.draw()
     
 #Init main
