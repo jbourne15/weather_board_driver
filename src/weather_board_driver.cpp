@@ -20,25 +20,52 @@ float SEALEVELPRESSURE_HPA = 1024.25;
 
 #define TCAADDR1 0x70 //first multiplexer
 #define TCAADDR2 0x71 //second multiplexer
+#define TCAADDR3 0x72 //third multiplexer
+#define TCAADDR4 0x73 //third multiplexer
 
 // file handlers for the multiplexers
 int fd1; 
 int fd2;
+int fd3;
+int fd4;
+
 
 void tcaselect(int i){
-  if (i>7){
-    wiringPiI2CWrite(fd1,0); //no channel selected from 1st multiplexer
-    wiringPiI2CWrite(fd2,1<<(i-8)); //select sensor from 2nd multiplexer
-  }
-  else{
+  int sensor_i = i%8; // find sensor number
+  //std::cout<<"multiplexer #: "<<i/8<<std::endl;
+  switch (i/8){
+  case 0:
     wiringPiI2CWrite(fd2,0); //no channel selected from 2nd multiplexer
-    wiringPiI2CWrite(fd1,1<<i); //select sensor from 1st multiplexer
+    wiringPiI2CWrite(fd3,0); //no channel selected from 3nd multiplexer
+    wiringPiI2CWrite(fd4,0); //no channel selected from 4nd multiplexer
+    wiringPiI2CWrite(fd1,1<<sensor_i); //select sensor from 1st multiplexer    
+    break;
+  case 1:
+    wiringPiI2CWrite(fd1,0); //no channel selected from 1nd multiplexer
+    wiringPiI2CWrite(fd3,0); //no channel selected from 3nd multiplexer
+    wiringPiI2CWrite(fd4,0); //no channel selected from 4nd multiplexer
+    wiringPiI2CWrite(fd2,1<<sensor_i); //select sensor from 1st multiplexer    
+    break;
+  case 2:
+    wiringPiI2CWrite(fd1,0); //no channel selected from 1nd multiplexer
+    wiringPiI2CWrite(fd2,0); //no channel selected from 2nd multiplexer
+    wiringPiI2CWrite(fd4,0); //no channel selected from 4nd multiplexer
+    wiringPiI2CWrite(fd3,1<<sensor_i); //select sensor from 1st multiplexer    
+    break;
+  case 3:
+    wiringPiI2CWrite(fd1,0); //no channel selected from 1nd multiplexer
+    wiringPiI2CWrite(fd2,0); //no channel selected from 2nd multiplexer
+    wiringPiI2CWrite(fd3,0); //no channel selected from 3nd multiplexer
+    wiringPiI2CWrite(fd4,1<<sensor_i); //select sensor from 1st multiplexer    
+    break;
+
   }
+    
 }
+
 
 int main(int argc, char **argv)
 {
-  char *device = "/dev/i2c-1";
 
   ros::init(argc, argv, "weather_board_driver");
   ros::NodeHandle n;
@@ -47,6 +74,18 @@ int main(int argc, char **argv)
   int num_sensors = 0;
   n.getParam("/num_sensors", num_sensors);
   std::cout<<"number of sensors: "<<num_sensors<<std::endl;
+  
+  char *device;// stores the device path according to the devID
+  int devID; // reads in ROS parameter integeter designating which device
+  n.getParam("/device", devID);
+  if (devID==1){
+    device = "/dev/i2c-1";
+  }
+  else if (devID==2){
+    device = "/dev/i2c-2";
+  }
+ 
+  std::cout<<"Device: "<<device<<std::endl;
 
   int lr;
   n.getParam("/hz", lr);
@@ -54,23 +93,32 @@ int main(int argc, char **argv)
   ros::Rate loop_rate(lr);
 
   fd1 = wiringPiI2CSetupInterface(device, TCAADDR1);
-  std::cout<<"1st multiplexer handle: "<<fd1<<std::endl;
+  fd2 = wiringPiI2CSetupInterface(device, TCAADDR2);
+  fd3 = wiringPiI2CSetupInterface(device, TCAADDR3);
+  fd4 = wiringPiI2CSetupInterface(device, TCAADDR4);
+  std::cout<<"starting multiplexer 0 at handle: "<<fd1<<std::endl;  
+  std::cout<<"starting multiplexer 1 at handle: "<<fd2<<std::endl;
+  std::cout<<"starting multiplexer 2 at handle: "<<fd3<<std::endl;
+  std::cout<<"starting multiplexer 3 at handle: "<<fd4<<std::endl;  
 
+  /*
   if (num_sensors>8){
     fd2 = wiringPiI2CSetupInterface(device, TCAADDR2);
-    std::cout<<"2nd multiplexer handle: "<<fd2<<std::endl;
+    std::cout<<"starting multiplexer 1 at handle: "<<fd2<<std::endl;
+    if (num_sensors>16){
+      fd3 = wiringPiI2CSetupInterface(device, TCAADDR3);
+      std::cout<<"starting multiplexer 2 at handle: "<<fd3<<std::endl;
+      if (num_sensors>8){
+	fd4 = wiringPiI2CSetupInterface(device, TCAADDR4);
+	std::cout<<"starting multiplexer 3 at handle: "<<fd4<<std::endl;
+      }
+    }    
   }
+  */
 
   for (int j=0; j<num_sensors;j++){
     tcaselect(j);
-    /*
-    if (j>7){
-      std::cout<<"starting the "<<j<< "th bme280 sensor on fd1: "<<fd2<<" handle"<<std::endl;
-    }
-    else{
-      std::cout<<"starting the "<<j<< "th bme280 sensor on fd: "<<fd1<<" handle"<<std::endl;
-    } 
-    */
+    std::cout<<"starting sensor number: "<<j<<std::endl;
     
     //si1132_begin(device);
     if (bme280_begin(device) < 0) {
@@ -80,10 +128,10 @@ int main(int argc, char **argv)
     else{
       int com = bme280_set_power_mode(BME280_NORMAL_MODE);
       int com1 = bme280_set_oversamp_pressure(BME280_OVERSAMP_SKIPPED);
-      std::cout<<com1<<", "<<com1<<std::endl;
+      //std::cout<<com1<<", "<<com1<<std::endl;
     }
    }
-
+  
     /*
     int com  = 5;//bme280_set_filter(BME280_FILTER_COEFF_OFF);
     int com1 = 5;//bme280_set_oversamp_humidity(BME280_OVERSAMP_1X);
