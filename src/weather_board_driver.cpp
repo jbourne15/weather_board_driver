@@ -8,6 +8,8 @@
 #include <weather_board_driver/wb_list.h>
 
 #include <stdio.h>
+#include <vector>
+#include <numeric>
 #include "bme280-i2c.h"
 #include "si1132.h"
 
@@ -28,7 +30,6 @@ int fd1;
 int fd2;
 int fd3;
 int fd4;
-
 
 void tcaselect(int i){
   int sensor_i = i%8; // find sensor number
@@ -71,9 +72,17 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
   ros::Publisher wb_pub = n.advertise<weather_board_driver::wb_list>("wb_list", 1);
 
+  
+  std::vector<float> biasHlist;
+  bool  biasFlag  = false; // flag designates when to publish wb data
+  float biasMean  = 0;     // container for holding the humidity mean across sensors for many counts (biasNum)
+  int   biasCount = 0;     // counter   
+  int   biasNum   = 0;     // quantifies how many iterates to take average over
+  
+  n.getParam("/biasNum", biasNum);
   int num_sensors = 0;
   n.getParam("/num_sensors", num_sensors);
-  std::cout<<"number of sensors: "<<num_sensors<<std::endl;
+  std::vector<float> bias(num_sensors,0);
   
   char *device;// stores the device path according to the devID
   int devID; // reads in ROS parameter integeter designating which device
@@ -84,41 +93,22 @@ int main(int argc, char **argv)
   else if (devID==2){
     device = "/dev/i2c-2";
   }
- 
-  std::cout<<"Device: "<<device<<std::endl;
-
+  
   int lr;
   n.getParam("/hz", lr);
-  std::cout<<"sensor frequency: "<<lr<<" hz"<<std::endl;
   ros::Rate loop_rate(lr);
 
   fd1 = wiringPiI2CSetupInterface(device, TCAADDR1);
   fd2 = wiringPiI2CSetupInterface(device, TCAADDR2);
   fd3 = wiringPiI2CSetupInterface(device, TCAADDR3);
   fd4 = wiringPiI2CSetupInterface(device, TCAADDR4);
-  std::cout<<"starting multiplexer 0 at handle: "<<fd1<<std::endl;  
-  std::cout<<"starting multiplexer 1 at handle: "<<fd2<<std::endl;
-  std::cout<<"starting multiplexer 2 at handle: "<<fd3<<std::endl;
-  std::cout<<"starting multiplexer 3 at handle: "<<fd4<<std::endl;  
-
-  /*
-  if (num_sensors>8){
-    fd2 = wiringPiI2CSetupInterface(device, TCAADDR2);
-    std::cout<<"starting multiplexer 1 at handle: "<<fd2<<std::endl;
-    if (num_sensors>16){
-      fd3 = wiringPiI2CSetupInterface(device, TCAADDR3);
-      std::cout<<"starting multiplexer 2 at handle: "<<fd3<<std::endl;
-      if (num_sensors>8){
-	fd4 = wiringPiI2CSetupInterface(device, TCAADDR4);
-	std::cout<<"starting multiplexer 3 at handle: "<<fd4<<std::endl;
-      }
-    }    
-  }
-  */
-
+  std::cout<<"starting 4 multiplexers at handle: "<<fd1<<", "<<fd2<<", "<<fd3<<", "<<fd4<<std::endl;
+  
+  std::cout<<"starting sensors ";
   for (int j=0; j<num_sensors;j++){
     tcaselect(j);
-    std::cout<<"starting sensor number: "<<j<<std::endl;
+    std::cout<<j<<", ";
+    if (j==num_sensors-1) {std::cout<<j<<std::endl;}
     
     //si1132_begin(device);
     if (bme280_begin(device) < 0) {
@@ -132,24 +122,11 @@ int main(int argc, char **argv)
     }
    }
   
-    /*
-    int com  = 5;//bme280_set_filter(BME280_FILTER_COEFF_OFF);
-    int com1 = 5;//bme280_set_oversamp_humidity(BME280_OVERSAMP_1X);
-    int com2 = 5;//bme280_set_power_mode(BME280_NORMAL_MODE);
-    int com3 = 5;//bme280_set_standby_durn(BME280_STANDBY_TIME_1_MS);
-    std::cout<<"com_rslt: "<<com<<", "<<com1<<", "<<com2<<", "<<com3<<std::endl;
-  
-    u_int8_t v_value;
-    com = bme280_get_filter(&v_value);
-    std::cout<<"com_rslt: "<<com<<std::endl;
-    std::cout<<"v_value: "<<v_value<<std::endl;
-    */
-
   while (ros::ok()) {
 
     //reset list variables
     weather_board_driver::wb_list list;
-
+    
     for (int j=0; j<num_sensors;j++){
       pressure = 0;
       temperature = 0;
@@ -166,18 +143,44 @@ int main(int argc, char **argv)
       bme280_read_pressure_temperature_humidity(&pressure, &temperature, &humidity);
 
       data.temperature  = temperature/100.0;
-      data.humidity     = humidity/1024.0;
+      data.humidity     = humidity/1024.0 + bias[j]; // bias is initially 0 until biasFlag is True
       data.pressure     = pressure/100.0;
       data.altitude     = bme280_readAltitude(pressure,SEALEVELPRESSURE_HPA);
 
       // push back into list
       list.wb_list.push_back(data);
+
+      // initially gather humidity data to correct for the bias.
+      if (biasFlag==false){
+	biasHlist.push_back(data.humidity);
+      }
+    }
+    double mean=0;
+    if (biasFlag!=true){
+      double sum = std::accumulate(biasHlist.begin(), biasHlist.end(), 0.0);
+      mean = sum / biasHlist.size();
     }    
 
-    wb_pub.publish(list);
+    if (biasFlag == true){ //publish data+(bias!=0)
+      wb_pub.publish(list);
+    } else { // update running mean     
+      biasMean += mean;
+      if (biasCount+1>=biasNum and biasFlag!=true){//check if we have enough data 
+	biasFlag = true;
+	if (biasNum!=0){std::cout<<"bias has been corrected"<<std::endl;}
+	biasMean = biasMean*1.0/biasNum;
+	if (biasNum!=0){ // require biasNum>0 else bias is 0 forall sensors (initialized)
+	  for (int j=0; j<num_sensors;j++){	  
+	    bias[j] = biasMean - biasHlist[j];
+	  }
+	}
+      }
+    }
 
     ros::spinOnce();
     loop_rate.sleep();
+
+    if (biasFlag != true){biasCount+=1;}
   }
   return 0;
 }
