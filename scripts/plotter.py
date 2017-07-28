@@ -57,7 +57,7 @@ def plot_updater(data=None):
     cbar.set_label('Relative humidity '+ r'%', size=20) 
     fig.canvas.draw()
 
-def plot_animate(i):###FIX ME
+def plot_animate(i):
     
     global X,Y,Z,fig,fsize,levels, isNewData
     print 'frame:', i
@@ -68,8 +68,8 @@ def plot_animate(i):###FIX ME
     plt.xlabel(r'$x$ '+ r'$(m)$', fontsize=20)
     plt.ylabel(r'$y$ '+ r'$(m)$',fontsize=20)
     
-    while not isNewData: 
-        time.sleep(.01)    
+    while not isNewData:                
+        time.sleep(.01)
 
     cont = plt.contourf(X, Y, Z, cmap='jet', levels=levels)
     cbar = plt.colorbar()
@@ -83,31 +83,26 @@ def plot_animate(i):###FIX ME
     
 ###
 
-
 #Init main
 if __name__ == '__main__':
+
     rospy.init_node('listener', anonymous=True)
     rospy.Subscriber("wb_list", wb_list, getData_callback)
     rate      = rospy.Rate(100)
-    animate   = rospy.get_param('animate')    
+    animate   = rospy.get_param('animate', True)    
     levels = np.linspace(50,100,1000)
 
     if animate is True:
-        numFrames = rospy.get_param('frames')
-        name      = rospy.get_param('animateName')
-        ext       = rospy.get_param('ext')
+        numFrames = rospy.get_param('frames', 20)
+        name      = rospy.get_param('animateName', 'humidity')
+        ext       = rospy.get_param('ext', '.mp4')
 
         #Added plot_updater to signature
-        ani = animation.FuncAnimation(fig, plot_animate, np.arange(1, 10), repeat=False)
+        ani = animation.FuncAnimation(fig, plot_animate, np.arange(1, numFrames+50), interval=100, blit=True)
         saveName = name+ext
         
-        Writer = animation.writers['ffmpeg']
-        writer = Writer(fps=15, bitrate=1800)
-
-        #print 'save:', ani.save(saveName, writer=writer)
         ani.save(saveName, writer="ffmpeg")
-        #ani.save("video.mp4", writer=writer)
-        #plt.show()
+        plt.show()
     else:              
         plt.ion()
         while not rospy.is_shutdown():            
