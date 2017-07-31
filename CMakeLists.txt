@@ -110,7 +110,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES weather_board_driver
-CATKIN_DEPENDS message_runtime
+CATKIN_DEPENDS message_runtime std_msgs
 #  DEPENDS system_lib
 )
 
@@ -138,6 +138,7 @@ include_directories(
 ## Declare a C++ executable
 add_executable(weather_board_driver src/weather_board_driver.cpp src/bme280.cpp src/bme280-i2c.cpp src/si1132.cpp)
 add_executable(single_wb_driver src/single_wb_driver.cpp src/bme280.cpp src/bme280-i2c.cpp src/si1132.cpp)
+add_executable(wb_data_center src/wb_data_center.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -151,6 +152,11 @@ target_link_libraries(weather_board_driver
 
 target_link_libraries(single_wb_driver
   ${catkin_LIBRARIES}
+  )
+
+target_link_libraries(wb_data_center
+  ${catkin_LIBRARIES}
+  #boost
   )
 
 

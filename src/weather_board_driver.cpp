@@ -4,6 +4,8 @@
 #include <iostream>
 #include "ros/ros.h"
 
+#include <std_msgs/Header.h>
+
 #include <weather_board_driver/wb_data.h>
 #include <weather_board_driver/wb_list.h>
 
@@ -71,7 +73,6 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "weather_board_driver");
   ros::NodeHandle n;
   ros::Publisher wb_pub = n.advertise<weather_board_driver::wb_list>("wb_list", 1);
-
   
   std::vector<float> biasHlist;
   bool  biasFlag  = false; // flag designates when to publish wb data
@@ -135,6 +136,10 @@ int main(int argc, char **argv)
       tcaselect(j);
 
       weather_board_driver::wb_data data;
+
+      // fill in Header
+      data.header.stamp = ros::Time::now();
+      data.header.seq   = j
       
       // read in data
       data.UV_index = 0;//Si1132_readUV()/100.0;

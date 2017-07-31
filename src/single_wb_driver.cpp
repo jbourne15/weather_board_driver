@@ -1,11 +1,14 @@
 //#include <wiringPi.h>
 //#include <wiringPiI2C.h>
 
+
 #include <iostream>
 #include "ros/ros.h"
 
 #include <weather_board_driver/wb_data.h>
 #include <weather_board_driver/wb_list.h>
+
+#include <std_msgs/Header.h>
 
 #include <stdio.h>
 #include "bme280-i2c.h"
@@ -25,6 +28,10 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "single_wb_driver");
   ros::NodeHandle n;
   ros::Publisher wb_pub = n.advertise<weather_board_driver::wb_data>("wb_data", 1);
+  std::string ns = n.getNamespace();
+  //const int id   = std::stoi(ns.back());
+  const int id   = 11111;//ns.back();
+  std::cout<<"namespace: "<<ns<<", id: "<<id<<std::endl;
 
   int lr;
   n.getParam("/hz", lr);
@@ -50,6 +57,10 @@ int main(int argc, char **argv)
     altitude = 0;
 
     weather_board_driver::wb_data data;
+
+    // fill in Header
+    data.header.stamp = ros::Time::now();
+    data.header.seq   = id;
       
     // read in data
     data.UV_index = 0;//Si1132_readUV()/100.0;
