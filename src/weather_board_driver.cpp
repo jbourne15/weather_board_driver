@@ -139,7 +139,7 @@ int main(int argc, char **argv)
 
       // fill in Header
       data.header.stamp = ros::Time::now();
-      data.header.seq   = j
+      data.header.seq   = j;
       
       // read in data
       data.UV_index = 0;//Si1132_readUV()/100.0;

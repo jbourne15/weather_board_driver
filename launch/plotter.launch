@@ -2,7 +2,7 @@
 	### plotter node ###
 	#-------------------------------#
 	<node pkg="weather_board_driver" type="plotter.py" name="plotter" output="screen"/>
-	<param name="animate" type="boolean" value="False"/>
+	<param name="animate" type="boolean" value="True"/>
 	<param name="frames" type="int" value="10"/>	
 	<param name="animateName" type="string" value="humidity"/>
 	<param name="ext" type="string" value=".mp4"/>

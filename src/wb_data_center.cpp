@@ -15,7 +15,8 @@ void createCallback(const weather_board_driver::wb_data::ConstPtr& msg){
   //std_msgs::Header data = msg.header;
   //float data = msg;
   //ROS_INFO("data: %i, %f", msg.seq, data);
-  ROS_INFO("data:", msg);
+  std::cout<<msg<<std::endl;
+  //ROS_INFO(msg);
   return;
 }
 
