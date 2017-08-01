@@ -1,13 +1,15 @@
 
 <launch>
+	<param name="device" type="int" value="1"/>    
+	<param name="num_sensors" type="int" value="25"/>
+	<param name="sensorhz" type="int" value="100"/>
+	<param name="biasNum" type="int" value="10"/>	
+
+
 	### Weather board sensor grid ###
 	#-------------------------------#
 	
 	<node pkg="weather_board_driver" type="weather_board_driver" name="wb_driver" output="screen"/>
-	<param name="device" type="int" value="1"/>    
-	<param name="num_sensors" type="int" value="25"/>
-	<param name="hz" type="int" value="100"/>
-	<param name="biasNum" type="int" value="10"/>	
 
 
 	### RQT plot humidity ###

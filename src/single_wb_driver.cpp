@@ -1,7 +1,6 @@
 //#include <wiringPi.h>
 //#include <wiringPiI2C.h>
 
-
 #include <iostream>
 #include "ros/ros.h"
 
@@ -29,9 +28,7 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
   ros::Publisher wb_pub = n.advertise<weather_board_driver::wb_data>("wb_data", 1);
   std::string ns = n.getNamespace();
-  //const int id   = std::stoi(ns.back());
-  const int id   = 11111;//ns.back();
-  std::cout<<"namespace: "<<ns<<", id: "<<id<<std::endl;
+  const char id   = ns[8];
 
   int lr;
   n.getParam("/hz", lr);
@@ -60,7 +57,8 @@ int main(int argc, char **argv)
 
     // fill in Header
     data.header.stamp = ros::Time::now();
-    data.header.seq   = id;
+    data.header.seq   = 0;
+    data.header.frame_id = ns;
       
     // read in data
     data.UV_index = 0;//Si1132_readUV()/100.0;

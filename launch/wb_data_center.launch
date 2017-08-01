@@ -1,0 +1,13 @@
+<launch>
+	<param name="datacenterhz" type="int" value="5"/>
+	<param name="numRobots" type="int" value="1"/>
+
+	### WB sensor data center ###
+	#-------------------------------#
+	<node pkg="weather_board_driver" type="wb_data_center" name="data_center" output="screen"/>
+
+	### RQT plot humidity ###
+	#-----------------------#
+	<!--node pkg="rqt_plot" type="rqt_plot" name="rqt_plot" args="/wb_data/humidity"/-->
+
+</launch>

@@ -96,7 +96,7 @@ int main(int argc, char **argv)
   }
   
   int lr;
-  n.getParam("/hz", lr);
+  n.getParam("/sensorhz", lr);
   ros::Rate loop_rate(lr);
 
   fd1 = wiringPiI2CSetupInterface(device, TCAADDR1);
@@ -139,7 +139,7 @@ int main(int argc, char **argv)
 
       // fill in Header
       data.header.stamp = ros::Time::now();
-      data.header.seq   = j
+      data.header.seq   = j;
       
       // read in data
       data.UV_index = 0;//Si1132_readUV()/100.0;
