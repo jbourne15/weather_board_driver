@@ -20,7 +20,6 @@ void createCallback(const weather_board_driver::wb_data msg){
   else {
     sleep(2);// wait until createTeam_data has size numRobot
   }
-}
 
 int main(int argc, char **argv)
 {

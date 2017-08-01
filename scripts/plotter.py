@@ -35,6 +35,7 @@ def getData_callback(data):
                    [data[4].humidity, data[9].humidity, data[14].humidity, data[19].humidity, data[24].humidity] ])
     data = np.reshape(data,(5,5)).T
 
+
     #Z = np.arange(64).reshape(8,8)
     #Z = Z.reshape((len(X), len(Y)))
 
@@ -50,10 +51,11 @@ def plot_updater(data=None):
     plt.axis([-1,9,-1,9])
     plt.xlabel(r'$x$ '+ r'$(m)$', fontsize=20)
     plt.ylabel(r'$y$ '+ r'$(m)$',fontsize=20)
-
+    
     plt.contourf(X, Y, Z, cmap='jet', levels=levels)
-
+    
     cbar = plt.colorbar()
+    #plt.clim(30,80)
     cbar.set_label('Relative humidity '+ r'%', size=20) 
     fig.canvas.draw()
 
@@ -89,19 +91,34 @@ if __name__ == '__main__':
     rospy.init_node('listener', anonymous=True)
     rospy.Subscriber("wb_list", wb_list, getData_callback)
     rate      = rospy.Rate(100)
-    animate   = rospy.get_param('animate', True)    
-    levels = np.linspace(50,100,1000)
+    animate   = rospy.get_param('animate', True)
+    print animate
+    animate = False
+
+    levels = np.linspace(45,100,1000)
 
     if animate is True:
-        numFrames = rospy.get_param('frames', 20)
+        numFrames = rospy.get_param('frames', 10)
+        numFrames = 4
         name      = rospy.get_param('animateName', 'humidity')
+        name = 'humidity'
         ext       = rospy.get_param('ext', '.mp4')
+        ext = '.mp4'
 
-        #Added plot_updater to signature
-        ani = animation.FuncAnimation(fig, plot_animate, np.arange(1, numFrames+50), interval=100, blit=True)
+        #NOTE: frames * (interval/1000) gives you the time of the resultant animation, e.g.,
+        #frames=60 and interval=1000 will give you a 60 second video.
+        #It takes 1:15 minutes to take 100 frames, reliably.
+        #Frames=300 will give a good animation feel.
+        ani = animation.FuncAnimation(fig, plot_animate, frames=600, interval=100,  blit=True)
+
         saveName = name+ext
         
+        #Writer = animation.writers['ffmpeg']
+        #writer = Writer(fps=15, bitrate=1800)
+
+        #print 'save:', ani.save(saveName, writer=writer)
         ani.save(saveName, writer="ffmpeg")
+        #ani.save("video.mp4", writer=writer)
         plt.show()
     else:              
         plt.ion()
