@@ -96,7 +96,7 @@ int main(int argc, char **argv)
   }
   
   int lr;
-  n.getParam("/hz", lr);
+  n.getParam("/sensorhz", lr);
   ros::Rate loop_rate(lr);
 
   fd1 = wiringPiI2CSetupInterface(device, TCAADDR1);

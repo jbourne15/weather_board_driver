@@ -1,12 +1,15 @@
 <launch>
+
+	<param name="hz" type="int" value="5"/>
+	
 	### Weather board sensor grid ###
 	#-------------------------------#
-	
+	<group ns="create0">
 	<node pkg="weather_board_driver" type="single_wb_driver" name="swb_driver" output="screen"/>
-	<param name="hz" type="int" value="100"/>
 
 	### RQT plot humidity ###
 	#-----------------------#
-	<node pkg="rqt_plot" type="rqt_plot" name="rqt_plot" args="/wb_data/humidity"/>
+	<!--node pkg="rqt_plot" type="rqt_plot" name="rqt_plot" args="/wb_data/humidity"/-->
+	</group>
 
 </launch>
