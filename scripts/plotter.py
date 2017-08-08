@@ -13,15 +13,17 @@ fsize=(15,12)
 fig = plt.figure('humidity_plot', figsize=fsize)
 ax = fig.add_subplot(111)
 ax.grid(True)
-plt.axis([-1,9,-1,9])
+#plt.axis([-1,9,-1,9])
+plt.axis([-.1,2.53,-.1,2.53])
 plt.xlabel(r'$x$ '+ r'$(m)$', fontsize=20)
 plt.ylabel(r'$y$ '+ r'$(m)$',fontsize=20)
+levels = np.linspace(50,80,1000)
 
 isNewData = False
 
-X = np.linspace(0,8,5)
-Y = np.linspace(8,0,5)
-X, Y = np.meshgrid(X, Y)
+x = np.linspace(0,2.4384,5)
+y = np.linspace(2.4384,0,5)
+X, Y = np.meshgrid(x, y)
 Z = None
 ###
         
@@ -48,13 +50,17 @@ def plot_updater(data=None):
     global X,Y,Z,fig,fsize,levels
     fig.clf()
     fig = plt.figure('humidity_plot', figsize=fsize)
-    plt.axis([-1,9,-1,9])
+    #plt.axis([-1,9,-1,9])
+    plt.axis([-.1,2.53,-.1,2.53])
     plt.xlabel(r'$x$ '+ r'$(m)$', fontsize=20)
     plt.ylabel(r'$y$ '+ r'$(m)$',fontsize=20)
     
     plt.contourf(X, Y, Z, cmap='jet', levels=levels)
+    plt.scatter(X.flatten(), Y.flatten(), s=100, c=Z.flatten(),vmin=50, vmax=80, cmap='jet')
     
-    cbar = plt.colorbar()
+    print Z
+
+    cbar = plt.colorbar(ticks=np.linspace(50,80,10))
     #plt.clim(30,80)
     cbar.set_label('Relative humidity '+ r'%', size=20) 
     fig.canvas.draw()
@@ -66,7 +72,7 @@ def plot_animate(i):
 
     fig.clf()
     fig = plt.figure('humidity_plot', figsize=fsize)
-    plt.axis([-1,9,-1,9])
+    plt.axis([-.1,2.53,-.1,2.53])
     plt.xlabel(r'$x$ '+ r'$(m)$', fontsize=20)
     plt.ylabel(r'$y$ '+ r'$(m)$',fontsize=20)
     
@@ -95,7 +101,6 @@ if __name__ == '__main__':
     print animate
     animate = False
 
-    levels = np.linspace(45,100,1000)
 
     if animate is True:
         numFrames = rospy.get_param('frames', 10)
