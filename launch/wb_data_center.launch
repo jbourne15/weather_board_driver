@@ -1,6 +1,6 @@
 <launch>
 	<param name="datacenterhz" type="int" value="100"/>
-	<param name="numRobots" type="int" value="2"/>
+	<!-- param name="numRobots" type="int" value="2"/ -->
 	<param name="biasNum" type="int" value="20"/>
 
 	### WB sensor data center ###
