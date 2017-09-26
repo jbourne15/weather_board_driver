@@ -22,10 +22,22 @@ float SEALEVELPRESSURE_HPA = 1024.25;
 
 int main(int argc, char **argv)
 {
-  char *device = "/dev/i2c-1";
-
   ros::init(argc, argv, "single_wb_driver");
   ros::NodeHandle n;
+
+  int dev;
+  char *device;
+  n.getParam("/dev", dev);
+  if (dev==2){
+    device = "/dev/i2c-2";
+    ROS_INFO("Changed i2c device: %i", 2);
+  }
+  else{
+    device = "/dev/i2c-1";
+    ROS_INFO("Changed i2c device: %i", 1);
+  }
+  
+
   ros::Publisher wb_pub = n.advertise<weather_board_driver::wb_data>("wb_data", 1);
   std::string ns = n.getNamespace();
   const char id   = ns[8];
@@ -34,7 +46,6 @@ int main(int argc, char **argv)
   n.getParam("/hz", lr);
   std::cout<<"sensor frequency: "<<lr<<" hz"<<std::endl;
   ros::Rate loop_rate(lr);
-
   //si1132_begin(device);
   if (bme280_begin(device) < 0) {
     std::cerr<<"single bme280 failed"<<std::endl;
