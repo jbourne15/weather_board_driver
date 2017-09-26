@@ -36,9 +36,12 @@ int main(int argc, char **argv)
     device = "/dev/i2c-1";
     ROS_INFO("Changed i2c device: %i", 1);
   }
+
+  std::string topicName = "wb_data";
+  n.getParam("/topic_name", topicName);
   
 
-  ros::Publisher wb_pub = n.advertise<weather_board_driver::wb_data>("wb_data", 1);
+  ros::Publisher wb_pub = n.advertise<weather_board_driver::wb_data>(topicName, 1);
   std::string ns = n.getNamespace();
   const char id   = ns[8];
 

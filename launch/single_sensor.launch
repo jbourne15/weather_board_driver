@@ -1,7 +1,9 @@
 <launch>
 
 	<param name="hz" type="int" value="100"/>
-	<param name="dev" type="int" value="2"/>	
+	<param name="dev" type="int" value="2"/>
+	# default is wb_data
+	<param name="topic_name" type="string" value="top_wb"/>
 
 	### Weather board sensor grid ###
 	#-------------------------------#
