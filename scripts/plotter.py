@@ -17,7 +17,9 @@ ax.grid(True)
 plt.axis([-.1,2.53,-.1,2.53])
 plt.xlabel(r'$x$ '+ r'$(m)$', fontsize=20)
 plt.ylabel(r'$y$ '+ r'$(m)$',fontsize=20)
-levels = np.linspace(50,80,1000)
+CBmin = 0
+CBmax = 100
+levels = np.linspace(CBmin,CBmax,1000)
 
 isNewData = False
 
@@ -56,11 +58,11 @@ def plot_updater(data=None):
     plt.ylabel(r'$y$ '+ r'$(m)$',fontsize=20)
     
     plt.contourf(X, Y, Z, cmap='jet', levels=levels)
-    plt.scatter(X.flatten(), Y.flatten(), s=100, c=Z.flatten(),vmin=50, vmax=80, cmap='jet')
+    plt.scatter(X.flatten(), Y.flatten(), s=100, c=Z.flatten(),vmin=CBmin, vmax=CBmax, cmap='jet')
     
     print Z
 
-    cbar = plt.colorbar(ticks=np.linspace(50,80,10))
+    cbar = plt.colorbar(ticks=np.linspace(CBmin,CBmax,11))
     #plt.clim(30,80)
     cbar.set_label('Relative humidity '+ r'%', size=20) 
     fig.canvas.draw()
