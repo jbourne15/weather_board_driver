@@ -6,13 +6,14 @@
 #include <vector>
 #include <numeric>
 
-
 #include <weather_board_driver/wb_data.h>
+#include <weather_board_driver/wb_list.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <std_msgs/MultiArrayDimension.h>
 #include <std_msgs/Header.h>
 
 std::vector<float> createTeam_data;
+//std::vector<weather_board_driver::wb_data> createTeam_data;
 
 void createCallback(const weather_board_driver::wb_data msg){
     std::string ns = msg.header.frame_id;  
@@ -25,7 +26,8 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "wb_data_center");
   ros::NodeHandle n;
-  ros::Publisher team_pub = n.advertise<std_msgs::Float64MultiArray>("team_data", 1);
+  //ros::Publisher team_pub = n.advertise<std_msgs::Float64MultiArray>("team_data", 1);
+  ros::Publisher team_pub = n.advertise<weather_board_driver::wb_list>("team_data", 1);
 
   std::vector<float> biasHlist;
   bool  biasFlag  = false; // flag designates when to publish wb data
@@ -51,6 +53,7 @@ int main(int argc, char **argv)
     std::ostringstream ss;
     ss << i;
     createTopic = create+ss.str()+"/wb_data"; //abide by the namescape
+    std::cout<<createTopic<<std::endl;
     sub[i] = n.subscribe(createTopic, 1, createCallback);
   }
 
@@ -68,11 +71,18 @@ int main(int argc, char **argv)
       arr.layout.dim[0].size = numRobot;
       arr.layout.dim[0].stride = 1;
       arr.layout.dim[0].label = "createTeamData";
-    
+
+      weather_board_driver::wb_list create_wbList;
+      weather_board_driver::wb_data data;
+
       for (int i=0; i<numRobot; i++){	
-	arr.data.push_back(createTeam_data[i]+bias[i]);
+	arr.data.push_back(createTeam_data[i]+bias[i]);	
+	data.header.stamp = ros::Time::now();
+	data.humidity = createTeam_data[i]+bias[i];
+	create_wbList.wb_list.push_back(data);
       }
-      team_pub.publish(arr);
+      team_pub.publish(create_wbList);
+      //team_pub.publish(arr);
     }
     // initially gather humidity data to correct for the bias.
     else if (std::find(createTeam_data.begin(), createTeam_data.end(), -1) == createTeam_data.end()){
